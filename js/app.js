@@ -12,20 +12,21 @@ const TIER_LABEL = { silver: "银色", gold: "金色", prismatic: "彩色" };
 const TIER_SHORT = { silver: "银", gold: "金", prismatic: "彩" };
 const ORDER = ["silver", "gold", "prismatic"];
 
-// 质变（Transmute）符文：选中后立即变成更高品质的随机符文
-// TransmuteGold(银)→随机金 · TransmutePrismatic(金)→随机彩 · TransmuteChaos(彩)→2个随机(70%金/30%银)
-const TRANSMUTE = {
-  TransmuteGold: { rolls: [{ pool: "gold" }] },
-  TransmutePrismatic: { rolls: [{ pool: "prismatic" }] },
-  TransmuteChaos: {
-    rolls: [
-      { mix: [["gold", 0.7], ["silver", 0.3]] },
-      { mix: [["gold", 0.7], ["silver", 0.3]] },
-    ],
-  },
-};
+// 质变（Transmute）符文：按名字判定变身规则
+// 质变：混沌→2个随机(70%金/30%银) · 质变：棱彩阶→1随机彩 · 质变：黄金阶→1随机金
+function transmuteSpec(a) {
+  const n = (a && a.name) || "";
+  if (!n.startsWith("质变")) return null;
+  if (n.indexOf("混沌") >= 0)
+    return { rolls: [{ mix: [["gold", 0.7], ["silver", 0.3]] }, { mix: [["gold", 0.7], ["silver", 0.3]] }] };
+  if (n.indexOf("黄金") >= 0) return { rolls: [{ pool: "gold" }] };
+  return { rolls: [{ pool: "prismatic" }] }; // 棱彩阶及兜底
+}
 function isTransmute(a) {
-  return a && TRANSMUTE.hasOwnProperty(a.apiName);
+  return !!transmuteSpec(a);
+}
+function isPandora(a) {
+  return !!a && (a.apiName === "PandorasBox" || a.name === "潘朵拉的盒子");
 }
 
 // 每个符文位状态：抽到的符文 + 质变结果 + 是否用过刷新
@@ -84,7 +85,7 @@ function chosenIds(exceptSlot) {
 
 // 计算质变结果（排除已选符文，避免再抽到质变自身）
 function resolveTransmute(aug, excludeIds) {
-  const spec = TRANSMUTE[aug.apiName];
+  const spec = transmuteSpec(aug);
   const excl = new Set(excludeIds || []);
   const out = [];
   spec.rolls.forEach((roll) => {
@@ -116,7 +117,7 @@ function commitChoice(i, aug) {
   slot.transmuted = isTransmute(aug)
     ? resolveTransmute(aug, chosenIds(i).concat([aug.id]))
     : null;
-  if (aug.apiName === PANDORA) applyPandora(i);
+  if (isPandora(aug)) applyPandora(i);
 }
 
 // 潘朵拉的盒子：把其余已选符文全部变成随机棱彩阶
@@ -125,7 +126,7 @@ function applyPandora(boxIndex) {
     if (j === boxIndex || !s.chosen) return;
     const exclude = new Set(chosenIds(j));
     const pool = AUG_BY_RARITY.prismatic.filter(
-      (x) => !exclude.has(x.id) && !isTransmute(x) && x.apiName !== PANDORA
+      (x) => !exclude.has(x.id) && !isTransmute(x) && !isPandora(x)
     );
     if (pool.length) {
       s.chosen = pool[Math.floor(Math.random() * pool.length)];
@@ -248,18 +249,18 @@ function buildSlot(s, i) {
   const body = el("div", "slot-body");
 
   if (s.chosen) {
-    const isPandora = s.chosen.apiName === PANDORA;
+    const pandoraSlot = isPandora(s.chosen);
     slot.classList.add("filled", s.chosen.rarity);
     if (isTransmute(s.chosen)) slot.classList.add("is-transmute");
     const p = el("div", "picked");
-    let badgePrefix = isTransmute(s.chosen) ? "质变·" : isPandora ? "潘朵拉·" : "";
+    let badgePrefix = isTransmute(s.chosen) ? "质变·" : pandoraSlot ? "潘朵拉·" : "";
     p.innerHTML =
       (s.fromPandora ? `<div class="pandora-tag">来自潘朵拉的盒子</div>` : "") +
       `<div class="slot-badge ${s.chosen.rarity}">${badgePrefix}${TIER_LABEL[s.chosen.rarity]}</div>` +
       `<img class="aug-icon" src="${s.chosen.icon}" alt="">` +
       `<div class="aug-name">${s.chosen.name}</div>` +
       `<div class="aug-desc">${escapeHtml(s.chosen.desc)}</div>` +
-      (isPandora ? `<div class="pandora-note">↓ 已将其余已选符文全部质变为随机棱彩阶</div>` : "");
+      (pandoraSlot ? `<div class="pandora-note">↓ 已将其余已选符文全部质变为随机棱彩阶</div>` : "");
     // 质变结果：展示它实际变成的符文
     if (s.transmuted && s.transmuted.length) {
       const tr = el("div", "transmute-result");
