@@ -1,0 +1,4 @@
+.claude/
+data/_versions.json
+.DS_Store
+__pycache__/

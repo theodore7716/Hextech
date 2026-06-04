@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>海克斯大乱斗 · 符文实验室</title>
+  <meta name="description" content="选择英雄，模拟海克斯大乱斗的银色 / 金色 / 彩色符文三选一，看看你的英雄能随机点出什么强化。" />
+  <link rel="preconnect" href="https://ddragon.leagueoflegends.com" />
+  <link rel="preconnect" href="https://raw.communitydragon.org" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="bg-splash"></div>
+  <div id="bg-overlay"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="hex">⬡</span>
+      <div>
+        <h1>海克斯大乱斗 · 符文实验室</h1>
+        <p class="subtitle">选英雄 · 抽符文 · 期待你的开局</p>
+      </div>
+    </div>
+    <div class="meta" id="meta-info"></div>
+  </header>
+
+  <!-- 第一步：选英雄 -->
+  <section id="screen-champ" class="screen">
+    <div class="screen-head">
+      <h2>第一步 · 选择你的英雄</h2>
+      <div class="search-wrap">
+        <input id="champ-search" type="text" placeholder="搜索英雄名称…（如 亚索 / 寒冰 / 剑魔）" autocomplete="off" />
+        <span class="count" id="champ-count"></span>
+      </div>
+    </div>
+    <div id="champ-grid" class="champ-grid"></div>
+  </section>
+
+  <!-- 第二步：抽符文 -->
+  <section id="screen-runes" class="screen hidden">
+    <div class="lab-head">
+      <button class="back-btn" id="back-btn">← 重新选英雄</button>
+      <div class="champ-banner" id="champ-banner"></div>
+      <div class="lab-actions">
+        <button class="btn btn-primary" id="roll-all-btn">⚡ 全部随机</button>
+        <button class="btn" id="reset-btn">重置</button>
+      </div>
+    </div>
+
+    <p class="hint">
+      共 <b>4</b> 次翻牌 · 每次 <b>随机出现一种品质</b>（<span class="tier-chip silver">银</span><span class="tier-chip gold">金</span><span class="tier-chip prismatic">彩</span>）· <b>三选一</b> · 每次可 <b>刷新一次</b>。
+      品质不可指定，翻牌时才揭晓——这才刺激。
+    </p>
+
+    <div id="slots" class="slots"></div>
+
+    <div class="loadout" id="loadout"></div>
+  </section>
+
+  <!-- 符文三选一弹层 -->
+  <div id="picker" class="picker hidden">
+    <div class="picker-box">
+      <div class="picker-head">
+        <h3 id="picker-title">翻牌抽取</h3>
+        <button class="picker-close" id="picker-close">✕</button>
+      </div>
+      <div id="picker-colorbar" class="picker-colorbar"></div>
+      <div id="picker-choices" class="picker-choices"></div>
+      <div class="picker-foot">
+        <button class="btn" id="picker-reroll">🔄 刷新（剩 1 次）</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    数据来源：Riot Data Dragon（英雄）· CommunityDragon（海克斯强化符文）。本站为粉丝模拟工具，与 Riot Games 无关。
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
