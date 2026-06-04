@@ -12,10 +12,26 @@ const TIER_LABEL = { silver: "银色", gold: "金色", prismatic: "彩色" };
 const TIER_SHORT = { silver: "银", gold: "金", prismatic: "彩" };
 const ORDER = ["silver", "gold", "prismatic"];
 
-// 每个符文位状态：抽到的符文 + 是否用过刷新
+// 质变（Transmute）符文：选中后立即变成更高品质的随机符文
+// TransmuteGold(银)→随机金 · TransmutePrismatic(金)→随机彩 · TransmuteChaos(彩)→2个随机(70%金/30%银)
+const TRANSMUTE = {
+  TransmuteGold: { rolls: [{ pool: "gold" }] },
+  TransmutePrismatic: { rolls: [{ pool: "prismatic" }] },
+  TransmuteChaos: {
+    rolls: [
+      { mix: [["gold", 0.7], ["silver", 0.3]] },
+      { mix: [["gold", 0.7], ["silver", 0.3]] },
+    ],
+  },
+};
+function isTransmute(a) {
+  return a && TRANSMUTE.hasOwnProperty(a.apiName);
+}
+
+// 每个符文位状态：抽到的符文 + 质变结果 + 是否用过刷新
 let slots = [];
 function freshSlots() {
-  return Array.from({ length: SLOT_COUNT }, () => ({ chosen: null, rerollUsed: false }));
+  return Array.from({ length: SLOT_COUNT }, () => ({ chosen: null, transmuted: null, rerollUsed: false }));
 }
 
 // 当前正在翻牌的位 + 本次随机出的品质 + 三个候选
@@ -56,9 +72,47 @@ function sampleDistinct(pool, n, exclude) {
 function chosenIds(exceptSlot) {
   const ids = [];
   slots.forEach((s, i) => {
-    if (i !== exceptSlot && s.chosen) ids.push(s.chosen.id);
+    if (i !== exceptSlot && s.chosen) {
+      ids.push(s.chosen.id);
+      if (s.transmuted) s.transmuted.forEach((t) => ids.push(t.id));
+    }
   });
   return ids;
+}
+
+// 计算质变结果（排除已选符文，避免再抽到质变自身）
+function resolveTransmute(aug, excludeIds) {
+  const spec = TRANSMUTE[aug.apiName];
+  const excl = new Set(excludeIds || []);
+  const out = [];
+  spec.rolls.forEach((roll) => {
+    let rarity = roll.pool;
+    if (!rarity) {
+      let r = Math.random();
+      let acc = 0;
+      rarity = roll.mix[0][0];
+      for (const [rar, w] of roll.mix) {
+        acc += w;
+        if (r < acc) { rarity = rar; break; }
+      }
+    }
+    const pool = AUG_BY_RARITY[rarity].filter((x) => !excl.has(x.id) && !isTransmute(x));
+    if (pool.length) {
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      out.push(pick);
+      excl.add(pick.id);
+    }
+  });
+  return out;
+}
+
+// 确认选择（处理质变）
+function commitChoice(i, aug) {
+  const slot = slots[i];
+  slot.chosen = aug;
+  slot.transmuted = isTransmute(aug)
+    ? resolveTransmute(aug, chosenIds(i).concat([aug.id]))
+    : null;
 }
 
 function escapeHtml(str) {
@@ -176,16 +230,28 @@ function buildSlot(s, i) {
 
   if (s.chosen) {
     slot.classList.add("filled", s.chosen.rarity);
+    if (isTransmute(s.chosen)) slot.classList.add("is-transmute");
     const p = el("div", "picked");
     p.innerHTML =
-      `<div class="slot-badge ${s.chosen.rarity}">${TIER_LABEL[s.chosen.rarity]}</div>` +
+      `<div class="slot-badge ${s.chosen.rarity}">${isTransmute(s.chosen) ? "质变·" : ""}${TIER_LABEL[s.chosen.rarity]}</div>` +
       `<img class="aug-icon" src="${s.chosen.icon}" alt="">` +
       `<div class="aug-name">${s.chosen.name}</div>` +
       `<div class="aug-desc">${escapeHtml(s.chosen.desc)}</div>`;
-    const again = el("button", "draw-btn");
-    again.textContent = "重新翻牌";
-    again.addEventListener("click", () => openPicker(i));
-    p.appendChild(again);
+    // 质变结果：展示它实际变成的符文
+    if (s.transmuted && s.transmuted.length) {
+      const tr = el("div", "transmute-result");
+      tr.innerHTML = `<div class="tr-arrow">质变为 ↓</div>`;
+      s.transmuted.forEach((t) => {
+        const item = el("div", "tr-item " + t.rarity);
+        item.innerHTML =
+          `<img src="${t.icon}" alt="">` +
+          `<div class="tr-text"><span class="tr-name">${t.name}</span>` +
+          `<span class="tier-chip ${t.rarity}">${TIER_SHORT[t.rarity]}</span>` +
+          `<div class="tr-desc">${escapeHtml(t.desc)}</div></div>`;
+        tr.appendChild(item);
+      });
+      p.appendChild(tr);
+    }
     body.appendChild(p);
   } else {
     const empty = el("div", "slot-empty");
@@ -286,7 +352,7 @@ function rerollActive() {
 }
 
 function choose(a) {
-  slots[activeSlot].chosen = a;
+  commitChoice(activeSlot, a);
   closePicker();
   renderSlots();
 }
@@ -304,7 +370,7 @@ function rollAll() {
   slots.forEach((s, i) => {
     const color = rollColor();
     const opts = sampleDistinct(AUG_BY_RARITY[color], 3, chosenIds(i));
-    if (opts.length) s.chosen = opts[Math.floor(Math.random() * opts.length)];
+    if (opts.length) commitChoice(i, opts[Math.floor(Math.random() * opts.length)]);
     s.rerollUsed = false;
   });
   renderSlots();
@@ -328,10 +394,14 @@ function renderLoadout() {
   const items = el("div", "lo-items");
   slots.forEach((s) => {
     if (!s.chosen) return;
-    const chip = el("div", "lo-chip");
-    chip.innerHTML =
-      `<img src="${s.chosen.icon}" alt=""><span class="tier-chip ${s.chosen.rarity}">${TIER_SHORT[s.chosen.rarity]}</span> ${s.chosen.name}`;
-    items.appendChild(chip);
+    // 质变符文在概览里直接显示它变成的符文
+    const effective = s.transmuted && s.transmuted.length ? s.transmuted : [s.chosen];
+    effective.forEach((a) => {
+      const chip = el("div", "lo-chip");
+      chip.innerHTML =
+        `<img src="${a.icon}" alt=""><span class="tier-chip ${a.rarity}">${TIER_SHORT[a.rarity]}</span> ${a.name}`;
+      items.appendChild(chip);
+    });
   });
   lo.appendChild(items);
 }

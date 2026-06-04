@@ -238,6 +238,38 @@ html, body {
 .slot-badge.silver { color: var(--silver); border: 1px solid rgba(196, 207, 218, .5); }
 .slot-badge.gold { color: var(--gold); border: 1px solid rgba(240, 192, 64, .55); }
 .slot-badge.prismatic { color: #d7b8ff; border: 1px solid rgba(190, 150, 255, .6); }
+
+/* 质变结果展示 */
+.transmute-result {
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.tr-arrow {
+  font-size: 11px;
+  color: var(--hex);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.tr-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 11px;
+  margin-bottom: 8px;
+}
+.tr-item.gold { border-color: rgba(240, 192, 64, .4); }
+.tr-item.prismatic { border-color: rgba(190, 150, 255, .5); }
+.tr-item img { width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; }
+.tr-text { flex: 1; }
+.tr-name { font-weight: 700; font-size: 13.5px; margin-right: 6px; }
+.tr-desc { font-size: 11px; color: var(--muted); line-height: 1.5; white-space: pre-line; margin-top: 3px; }
+.slot.is-transmute .aug-name { font-style: italic; }
 .draw-btn {
   background: var(--panel-2);
   border: 1px solid var(--line);
