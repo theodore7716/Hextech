@@ -1,0 +1,213 @@
+[
+ {
+  "key": "archmage",
+  "name": "大法师",
+  "desc": "5 个强化符文 施放技能时，返还另一个随机技能的部分冷却时间。",
+  "tiers": [
+   {
+    "count": 2,
+    "effect": "施放技能时返还一个随机技能40%冷却时间"
+   }
+  ],
+  "members": [
+   "Juiced",
+   "Mind_to_Matter",
+   "Buff_Buddies",
+   "Ocean_Soul",
+   "Overflow"
+  ]
+ },
+ {
+  "key": "dive-bomb-set",
+  "name": "丧钟",
+  "desc": "4 个强化符文 冲向死亡并使用强化符文造成真实伤害。",
+  "tiers": [
+   {
+    "count": 2,
+    "effect": "死亡计时减少40%"
+   }
+  ],
+  "members": [
+   "Dive_Bomber",
+   "Self_Destruct",
+   "Final_City_Transit",
+   "Clown_College"
+  ]
+ },
+ {
+  "key": "firecracker-set",
+  "name": "神龙烈焰",
+  "desc": "6 个强化符文 飞弹很酷，更多飞弹更酷。",
+  "tiers": [
+   {
+    "count": 2,
+    "effect": "弹跳2次，造成40%原始伤害"
+   },
+   {
+    "count": 4,
+    "effect": "弹跳3次，造成80%原始伤害"
+   }
+  ],
+  "members": [
+   "Typhoon",
+   "Light_em_Up",
+   "Twin_Fire",
+   "Critical_Missile",
+   "Magic_Missile",
+   "Fan_The_Hammer"
+  ]
+ },
+ {
+  "key": "fully-automated",
+  "name": "完全自动化",
+  "desc": "8 个强化符文 让海克斯大乱斗工厂真正成长的第一步。",
+  "tiers": [
+   {
+    "count": 2,
+    "effect": "自动施法冷却时间减少30%"
+   },
+   {
+    "count": 3,
+    "effect": "自动施法冷却时间受技能急速加成"
+   }
+  ],
+  "members": [
+   "FireFox",
+   "Frost_Wraith",
+   "Self_Destruct",
+   "Ok_Boomerang",
+   "Sonata",
+   "Divine_Intervention",
+   "Quantum_Computing",
+   "Prom_Queen"
+  ]
+ },
+ {
+  "key": "high-roller",
+  "name": "掷骰狂人",
+  "desc": "6 个强化符文 不出手必不中。",
+  "tiers": [
+   {
+    "count": 2,
+    "effect": "小兵死亡时有几率掉落属性铁砧"
+   },
+   {
+    "count": 3,
+    "effect": "金色或棱彩铁砧几率+50%"
+   },
+   {
+    "count": 5,
+    "effect": "金色或棱彩铁砧几率+100%"
+   }
+  ],
+  "members": [
+   "Transmute_Prismatic",
+   "Transmute_Chaos",
+   "PandorasBox",
+   "Stats",
+   "Stats_on_Stats",
+   "Stats_on_Stats_on_Stats"
+  ]
+ },
+ {
+  "key": "make-it-rain",
+  "name": "金币雨",
+  "desc": "7 个强化符文 金钱主宰一切。",
+  "tiers": [
+   {
+    "count": 2,
+    "effect": "击杀敌人掉落6枚金币（每枚5金币，队友可拾取）"
+   },
+   {
+    "count": 3,
+    "effect": "击杀敌人掉落12枚金币（每枚5金币，队友可拾取）"
+   }
+  ],
+  "members": [
+   "Upgrade_Immolate",
+   "Upgrade_Collector",
+   "From_Beginning_To_End",
+   "Donation",
+   "Red_Envelopes",
+   "Goldrend",
+   "Heads_Up_Cupcake"
+  ]
+ },
+ {
+  "key": "snowday",
+  "name": "下雪天",
+  "desc": "5 个强化符文 雪球嗖嗖嗖。",
+  "tiers": [
+   {
+    "count": 2,
+    "effect": "雪球技能急速+50，伤害+30%"
+   },
+   {
+    "count": 3,
+    "effect": "雪球技能急速+100，伤害+50%"
+   },
+   {
+    "count": 4,
+    "effect": "雪球技能急速+150，伤害+100%"
+   }
+  ],
+  "members": [
+   "Snowball_Upgrade",
+   "Snowball_Roulette",
+   "Pinball",
+   "Biggest_Snowball_Ever",
+   "Holy_Snowball"
+  ]
+ },
+ {
+  "key": "stackosaurus-rex",
+  "name": "叠角龙",
+  "desc": "7 个强化符文 获得层数时，额外获得更多层数。",
+  "tiers": [
+   {
+    "count": 2,
+    "effect": "额外获得+50%层数"
+   },
+   {
+    "count": 3,
+    "effect": "额外获得+100%层数"
+   },
+   {
+    "count": 4,
+    "effect": "额外获得+200%层数"
+   }
+  ],
+  "members": [
+   "Quest_Steel_Your_Heart",
+   "Upgrade_Hubris",
+   "Soul_Eater",
+   "Phenomenal_Evil",
+   "Master_of_Duality",
+   "Tap_Dancer",
+   "Infinite_Recursion"
+  ]
+ },
+ {
+  "key": "wee-woo-wee-woo",
+  "name": "喂呜喂呜",
+  "desc": "6 个强化符文 对生命值低于50%的友军获得额外效果。",
+  "tiers": [
+   {
+    "count": 2,
+    "effect": "获得50%移动速度"
+   },
+   {
+    "count": 3,
+    "effect": "你的下一次治疗或护盾额外回复目标12%已损失生命值（10秒冷却）"
+   }
+  ],
+  "members": [
+   "First_Aid_Kit",
+   "All_For_You",
+   "Critical_Healing",
+   "Sonata",
+   "Windspeaker_s_Blessing",
+   "I_m_a_Baby_Kitty_Where_is_Mama"
+  ]
+ }
+]

@@ -2,6 +2,7 @@
 
 // ---------- 状态 ----------
 let DATA = null;
+let SYNERGIES = [];
 let AUG_BY_RARITY = { silver: [], gold: [], prismatic: [] };
 let selectedChamp = null;
 
@@ -155,6 +156,12 @@ async function init() {
   AUG_BY_RARITY = { silver: [], gold: [], prismatic: [] };
   DATA.augments.forEach((a) => AUG_BY_RARITY[a.rarity].push(a));
 
+  try {
+    SYNERGIES = await (await fetch("data/synergies.json")).json();
+  } catch (e) {
+    SYNERGIES = [];
+  }
+
   $("#meta-info").innerHTML =
     `游戏版本 ${DATA.version}<br>${DATA.championCount} 位英雄 · ` +
     `${DATA.augmentsByRarity.silver}银 / ${DATA.augmentsByRarity.gold}金 / ${DATA.augmentsByRarity.prismatic}彩`;
@@ -242,6 +249,7 @@ function renderSlots() {
   wrap.innerHTML = "";
   slots.forEach((s, i) => wrap.appendChild(buildSlot(s, i)));
   renderLoadout();
+  renderSynergies();
 }
 
 function buildSlot(s, i) {
@@ -439,6 +447,77 @@ function renderLoadout() {
     });
   });
   lo.appendChild(items);
+}
+
+// ---------- 符文羁绊 ----------
+// 玩家实际拥有的符文 id（含质变变出的结果）
+function ownedAugmentIds() {
+  const ids = new Set();
+  slots.forEach((s) => {
+    if (!s.chosen) return;
+    ids.add(s.chosen.id);
+    if (s.transmuted) s.transmuted.forEach((t) => ids.add(t.id));
+  });
+  return ids;
+}
+
+function activeTierIndex(tiers, count) {
+  let idx = -1;
+  tiers.forEach((t, i) => {
+    if (count >= t.count) idx = i;
+  });
+  return idx;
+}
+
+function renderSynergies() {
+  const wrap = $("#synergies");
+  if (!SYNERGIES.length) {
+    wrap.classList.remove("show");
+    return;
+  }
+  const owned = ownedAugmentIds();
+  const rows = [];
+  SYNERGIES.forEach((set) => {
+    const have = set.members.filter((m) => owned.has(m)).length;
+    if (have > 0) rows.push({ set, have });
+  });
+  if (!rows.length) {
+    wrap.classList.remove("show");
+    wrap.innerHTML = "";
+    return;
+  }
+  const minNeed = (s) => (s.tiers[0] ? s.tiers[0].count : 2);
+  // 已激活的(达到最低档)排前，其次按拥有数
+  rows.sort((a, b) => {
+    const aa = a.have >= minNeed(a.set) ? 1 : 0;
+    const ba = b.have >= minNeed(b.set) ? 1 : 0;
+    return ba - aa || b.have - a.have;
+  });
+
+  wrap.classList.add("show");
+  wrap.innerHTML = `<div class="syn-title">符文羁绊（套装加成）</div>`;
+  const grid = el("div", "syn-grid");
+  rows.forEach(({ set, have }) => {
+    const need = minNeed(set);
+    const on = have >= need;
+    const total = set.members.length;
+    const aIdx = activeTierIndex(set.tiers, have);
+    const card = el("div", "syn-card" + (on ? " on" : ""));
+    const tiersHtml = set.tiers
+      .map((t, i) => {
+        const cls = i === aIdx ? "syn-tier cur" : have >= t.count ? "syn-tier reached" : "syn-tier";
+        return `<div class="${cls}"><b>${t.count}</b> ${escapeHtml(t.effect)}</div>`;
+      })
+      .join("");
+    card.innerHTML =
+      `<div class="syn-head">` +
+      `<span class="syn-name">${set.name}</span>` +
+      `<span class="syn-count">${have}/${total}</span></div>` +
+      (set.desc ? `<div class="syn-desc">${escapeHtml(set.desc)}</div>` : "") +
+      `<div class="syn-tiers">${tiersHtml}</div>`;
+    grid.appendChild(card);
+  });
+  wrap.appendChild(grid);
 }
 
 init();

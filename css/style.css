@@ -462,6 +462,53 @@ html, body {
 }
 .loadout .lo-chip img { width: 30px; height: 30px; border-radius: 50%; }
 
+/* 符文羁绊面板 */
+.synergies { margin-top: 22px; display: none; }
+.synergies.show { display: block; }
+.syn-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.syn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.syn-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 13px 15px;
+  opacity: .6;
+  transition: .2s;
+}
+.syn-card.on {
+  opacity: 1;
+  border-color: var(--hex);
+  box-shadow: 0 0 18px rgba(30, 200, 200, .14);
+}
+.syn-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.syn-name { font-weight: 700; font-size: 15px; }
+.syn-card.on .syn-name { color: var(--hex); }
+.syn-count {
+  font-size: 12px; font-weight: 700;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 20px; padding: 2px 10px; color: var(--muted);
+}
+.syn-card.on .syn-count { color: var(--hex); border-color: var(--hex); }
+.syn-desc { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-bottom: 9px; }
+.syn-tiers { display: flex; flex-direction: column; gap: 5px; }
+.syn-tier {
+  font-size: 11.5px; color: var(--muted); line-height: 1.45;
+  padding: 4px 8px; border-radius: 7px; border: 1px solid transparent;
+}
+.syn-tier b {
+  display: inline-block; min-width: 16px; text-align: center;
+  background: var(--panel-2); border-radius: 5px; margin-right: 6px; color: var(--muted);
+}
+.syn-tier.reached { color: var(--text); }
+.syn-tier.cur {
+  color: var(--text); background: rgba(30, 200, 200, .1); border-color: rgba(30, 200, 200, .4);
+}
+.syn-tier.cur b { background: var(--hex); color: #06262a; }
+
 .footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px; border-top: 1px solid var(--line); }
 
 .loading-screen {
