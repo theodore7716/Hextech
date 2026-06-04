@@ -31,8 +31,9 @@ function isTransmute(a) {
 // 每个符文位状态：抽到的符文 + 质变结果 + 是否用过刷新
 let slots = [];
 function freshSlots() {
-  return Array.from({ length: SLOT_COUNT }, () => ({ chosen: null, transmuted: null, rerollUsed: false }));
+  return Array.from({ length: SLOT_COUNT }, () => ({ chosen: null, transmuted: null, fromPandora: false, rerollUsed: false }));
 }
+const PANDORA = "PandorasBox"; // 潘朵拉的盒子：将其余所有符文变为随机棱彩
 
 // 当前正在翻牌的位 + 本次随机出的品质 + 三个候选
 let activeSlot = -1;
@@ -107,13 +108,31 @@ function resolveTransmute(aug, excludeIds) {
   return out;
 }
 
-// 确认选择（处理质变）
+// 确认选择（处理质变 / 潘朵拉的盒子）
 function commitChoice(i, aug) {
   const slot = slots[i];
   slot.chosen = aug;
+  slot.fromPandora = false;
   slot.transmuted = isTransmute(aug)
     ? resolveTransmute(aug, chosenIds(i).concat([aug.id]))
     : null;
+  if (aug.apiName === PANDORA) applyPandora(i);
+}
+
+// 潘朵拉的盒子：把其余已选符文全部变成随机棱彩阶
+function applyPandora(boxIndex) {
+  slots.forEach((s, j) => {
+    if (j === boxIndex || !s.chosen) return;
+    const exclude = new Set(chosenIds(j));
+    const pool = AUG_BY_RARITY.prismatic.filter(
+      (x) => !exclude.has(x.id) && !isTransmute(x) && x.apiName !== PANDORA
+    );
+    if (pool.length) {
+      s.chosen = pool[Math.floor(Math.random() * pool.length)];
+      s.transmuted = null;
+      s.fromPandora = true;
+    }
+  });
 }
 
 function escapeHtml(str) {
@@ -229,14 +248,18 @@ function buildSlot(s, i) {
   const body = el("div", "slot-body");
 
   if (s.chosen) {
+    const isPandora = s.chosen.apiName === PANDORA;
     slot.classList.add("filled", s.chosen.rarity);
     if (isTransmute(s.chosen)) slot.classList.add("is-transmute");
     const p = el("div", "picked");
+    let badgePrefix = isTransmute(s.chosen) ? "质变·" : isPandora ? "潘朵拉·" : "";
     p.innerHTML =
-      `<div class="slot-badge ${s.chosen.rarity}">${isTransmute(s.chosen) ? "质变·" : ""}${TIER_LABEL[s.chosen.rarity]}</div>` +
+      (s.fromPandora ? `<div class="pandora-tag">来自潘朵拉的盒子</div>` : "") +
+      `<div class="slot-badge ${s.chosen.rarity}">${badgePrefix}${TIER_LABEL[s.chosen.rarity]}</div>` +
       `<img class="aug-icon" src="${s.chosen.icon}" alt="">` +
       `<div class="aug-name">${s.chosen.name}</div>` +
-      `<div class="aug-desc">${escapeHtml(s.chosen.desc)}</div>`;
+      `<div class="aug-desc">${escapeHtml(s.chosen.desc)}</div>` +
+      (isPandora ? `<div class="pandora-note">↓ 已将其余已选符文全部质变为随机棱彩阶</div>` : "");
     // 质变结果：展示它实际变成的符文
     if (s.transmuted && s.transmuted.length) {
       const tr = el("div", "transmute-result");

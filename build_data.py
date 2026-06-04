@@ -71,6 +71,8 @@ def resolve_desc(desc, dv):
     # 去掉图标/精灵占位符 %i:Xxx% 以及 %asciiToken%（不误伤 "20%" 这类百分号）
     desc = re.sub(r"%i:[^%]*%", "", desc)
     desc = re.sub(r"%[A-Za-z][^%]*%", "", desc)
+    # 去掉 {{ Keyword_Xxx }} 这类关键词引用占位符
+    desc = re.sub(r"\{\{.*?\}\}", "", desc)
     # 换行标签
     desc = re.sub(r"<\s*br\s*/?\s*>", "\n", desc, flags=re.I)
     # 去掉其余标签
