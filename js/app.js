@@ -38,6 +38,7 @@ function freshSlots() {
 let activeSlot = -1;
 let activeColor = null;
 let activeChoices = [];
+let activeRerolled = []; // 每张牌是否已用过刷新
 let revealTimers = [];
 
 // ---------- 工具 ----------
@@ -182,7 +183,6 @@ function bindGlobal() {
   $("#roll-all-btn").addEventListener("click", rollAll);
   $("#reset-btn").addEventListener("click", resetSlots);
   $("#picker-close").addEventListener("click", closePicker);
-  $("#picker-reroll").addEventListener("click", rerollActive);
   $("#picker").addEventListener("click", (e) => {
     if (e.target.id === "picker") closePicker();
   });
@@ -275,15 +275,15 @@ function buildSlot(s, i) {
 // ---------- 翻牌弹层 ----------
 function openPicker(i) {
   activeSlot = i;
-  slots[i].rerollUsed = false; // 新的一次翻牌：刷新机会重置
   drawNewCards();
   $("#picker").classList.remove("hidden");
 }
 
-// 随机出一种品质 + 三个候选
+// 随机出一种品质 + 三个候选（本次品质固定，仅可逐张刷新）
 function drawNewCards() {
   activeColor = rollColor();
   activeChoices = sampleDistinct(AUG_BY_RARITY[activeColor], 3, chosenIds(activeSlot));
+  activeRerolled = activeChoices.map(() => false);
   renderPicker();
 }
 
@@ -292,9 +292,45 @@ function clearReveals() {
   revealTimers = [];
 }
 
+// 构建单张牌（含其下方的独立刷新按钮）
+function buildChoiceCell(idx, delay) {
+  const a = activeChoices[idx];
+  const cell = el("div", "choice-cell");
+
+  const card = el("div", "flip-card");
+  const inner = el("div", "flip-inner");
+  const back = el("div", "flip-back");
+  back.innerHTML = '<span class="hexq">⬡</span>';
+  const front = el("div", "flip-front choice " + a.rarity);
+  front.innerHTML =
+    `<img src="${a.icon}" alt="">` +
+    `<div class="c-name">${a.name}</div>` +
+    `<div class="c-desc">${escapeHtml(a.desc)}</div>`;
+  inner.appendChild(back);
+  inner.appendChild(front);
+  card.appendChild(inner);
+  card.addEventListener("click", () => {
+    if (!card.classList.contains("revealed")) return; // 翻开后才能选
+    choose(activeChoices[idx]);
+  });
+  cell.appendChild(card);
+
+  // 这张牌专属的刷新按钮（每张一次）
+  const rb = el("button", "card-reroll");
+  rb.disabled = activeRerolled[idx];
+  rb.textContent = activeRerolled[idx] ? "✓ 已刷新" : "🔄 刷新这张";
+  rb.addEventListener("click", (e) => {
+    e.stopPropagation();
+    rerollCard(idx);
+  });
+  cell.appendChild(rb);
+
+  revealTimers.push(setTimeout(() => card.classList.add("revealed"), delay));
+  return cell;
+}
+
 function renderPicker() {
   clearReveals();
-  const s = slots[activeSlot];
 
   $("#picker-title").textContent = `第 ${activeSlot + 1} 次翻牌`;
   const bar = $("#picker-colorbar");
@@ -303,52 +339,27 @@ function renderPicker() {
 
   const box = $("#picker-choices");
   box.innerHTML = "";
-  activeChoices.forEach((a, idx) => {
-    const card = el("div", "flip-card");
-    const inner = el("div", "flip-inner");
-
-    const back = el("div", "flip-back");
-    back.innerHTML = '<span class="hexq">⬡</span>';
-
-    const front = el("div", "flip-front choice " + a.rarity);
-    front.innerHTML =
-      `<img src="${a.icon}" alt="">` +
-      `<div class="c-name">${a.name}</div>` +
-      `<div class="c-desc">${escapeHtml(a.desc)}</div>`;
-
-    inner.appendChild(back);
-    inner.appendChild(front);
-    card.appendChild(inner);
-    card.addEventListener("click", () => {
-      if (!card.classList.contains("revealed")) return; // 翻开后才能选
-      choose(a);
-    });
-    box.appendChild(card);
-
-    // 依次翻牌
-    revealTimers.push(
-      setTimeout(() => card.classList.add("revealed"), 140 * idx + 120)
-    );
-  });
+  activeChoices.forEach((a, idx) => box.appendChild(buildChoiceCell(idx, 140 * idx + 120)));
 
   // 全部翻开后揭晓品质
   revealTimers.push(
     setTimeout(() => {
       bar.className = "picker-colorbar revealed " + activeColor;
-      bar.innerHTML = `本次出现 <span class="reveal-tag ${activeColor}">${TIER_LABEL[activeColor]}符文</span> · 三选一`;
+      bar.innerHTML = `本次出现 <span class="reveal-tag ${activeColor}">${TIER_LABEL[activeColor]}符文</span> · 三选一（每张可刷新一次）`;
     }, 140 * activeChoices.length + 220)
   );
-
-  const reroll = $("#picker-reroll");
-  reroll.disabled = s.rerollUsed;
-  reroll.textContent = s.rerollUsed ? "已刷新（本次用完）" : "🔄 刷新（剩 1 次）";
 }
 
-function rerollActive() {
-  const s = slots[activeSlot];
-  if (s.rerollUsed) return;
-  s.rerollUsed = true;
-  drawNewCards(); // 重新随机品质 + 候选，重新翻牌
+// 仅刷新某一张牌（同品质换一张，每张限一次）
+function rerollCard(idx) {
+  if (activeRerolled[idx]) return;
+  const exclude = chosenIds(activeSlot).concat(activeChoices.map((c) => c.id));
+  const next = sampleDistinct(AUG_BY_RARITY[activeColor], 1, exclude);
+  if (!next.length) return;
+  activeRerolled[idx] = true;
+  activeChoices[idx] = next[0];
+  const box = $("#picker-choices");
+  box.replaceChild(buildChoiceCell(idx, 60), box.children[idx]);
 }
 
 function choose(a) {
